@@ -53,6 +53,9 @@ setup(
         'plone.api>=1.8.4',
         'plone.restapi',
         'plone.app.dexterity',
+        'SQLAlchemy==1.3.22',
+        'psycopg2==2.8.6',
+        'alembic==1.4.3',
     ],
     extras_require={
         'test': [

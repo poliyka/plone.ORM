@@ -18,4 +18,22 @@
       directory="static"
       />
 
+  <browser:page
+      name='sqlalchemy_test'
+      for='*'
+      class='.view.Test'
+      layer="plone.ORM.interfaces.IPloneOrmLayer"
+      permission='cmf.ManagePortal'
+  />
+  
+  <!-- configlet -->
+  <browser:page
+    name="siteSettingControlPanel"
+    for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+    permission="cmf.ManagePortal"
+    class=".siteSetting.SiteSettingControlPanelView"
+    layer="plone.ORM.interfaces.IPloneOrmLayer"
+  />
+  
+
 </configure>
