@@ -14,21 +14,29 @@ config = context.config
 # This line sets up loggers basically.
 fileConfig(config.config_file_name)
 
-# Define path of models folder
 import os
 import sys
-models_path = os.path.abspath('models')
-sys.path.append(models_path)
+
+# 解決 make db_migration 找不到package路徑問題
+# 或許有更好的辦法,暫解
+# 如果i18n版本有更換,需更換路徑
+package_path = os.path.abspath('../../')
+i18n_path = os.path.abspath('../../../../../../buildout-cache/eggs/zope.i18nmessageid-5.0.1-py3.8-linux-x86_64.egg')
+if package_path not in sys.path:
+    sys.path.append(package_path)
+if i18n_path not in sys.path:
+    sys.path.append(i18n_path)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from user import User
+from plone.ORM.models import Base
 
-target_metadata = [
-    User.metadata,
-]
+from plone.ORM.models.user import User, Address
+from plone.ORM.models.store import Store
+
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

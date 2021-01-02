@@ -4,8 +4,10 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from plone import api
 
 from plone.ORM.browser.engine import Engine
-from plone.ORM.models.user import User
+from plone.ORM.models.user import User, Address
+from plone.ORM.models.store import Store
 from sqlalchemy.orm import aliased
+import sqlalchemy as sa
 
 class Test(BrowserView):
     
@@ -51,52 +53,49 @@ class Test(BrowserView):
             print(name)
         
         # *Reference https://docs.sqlalchemy.org/en/13/orm/tutorial.html#declare-a-mapping
-        
         # ColumnOperators.__eq__():
-        session.query.filter(User.name == 'ed')
+        session.query(User).filter(User.name == 'ed')
         # ColumnOperators.__ne__():
-        session.query.filter(User.name != 'ed')
+        session.query(User).filter(User.name != 'ed')
         # ColumnOperators.like():
-        session.query.filter(User.name.like('%ed%'))
+        session.query(User).filter(User.name.like('%ed%'))
         # ColumnOperators.ilike() (case-insensitive LIKE):
-        session.query.filter(User.name.ilike('%ed%'))
+        session.query(User).filter(User.name.ilike('%ed%'))
         # ColumnOperators.in_():
-        session.query.filter(User.name.in_(['ed', 'wendy', 'jack']))
+        session.query(User).filter(User.name.in_(['ed', 'wendy', 'jack']))
         # ColumnOperators.notin_():
-        session.query.filter(~User.name.in_(['ed', 'wendy', 'jack']))
+        session.query(User).filter(~User.name.in_(['ed', 'wendy', 'jack']))
         
         # ColumnOperators.is_():
-        session.query.filter(User.name == None)
+        session.query(User).filter(User.name == None)
         #! alternatively, if pep8/linters are a concern
-        session.query.filter(User.name.is_(None))
+        session.query(User).filter(User.name.is_(None))
         
         # ColumnOperators.isnot():
-        session.query.filter(User.name != None)
+        session.query(User).filter(User.name != None)
         #! alternatively, if pep8/linters are a concern
-        session.query.filter(User.name.isnot(None))
+        session.query(User).filter(User.name.isnot(None))
         
         # AND:
         # use and_()
         from sqlalchemy import and_
-        session.query.filter(and_(User.name == 'ed', User.fullname == 'Ed Jones'))
+        session.query(User).filter(and_(User.name == 'ed', User.fullname == 'Ed Jones'))
         #! or send multiple expressions to .filter()
-        session.query.filter(User.name == 'ed', User.fullname == 'Ed Jones')
+        session.query(User).filter(User.name == 'ed', User.fullname == 'Ed Jones')
         #! or chain multiple filter()/filter_by() calls
-        session.query.filter(User.name == 'ed').filter(User.fullname == 'Ed Jones')
+        session.query(User).filter(User.name == 'ed').filter(User.fullname == 'Ed Jones')
         
         #OR:
         from sqlalchemy import or_
-        session.query.filter(or_(User.name == 'ed', User.name == 'wendy'))
+        session.query(User).filter(or_(User.name == 'ed', User.name == 'wendy'))
         
         #ColumnOperators.match():
-        session.query.filter(User.name.match('wendy'))
+        session.query(User).filter(User.name.match('wendy'))
         # Query.all() returns a list:
-        session.query = session.query(User).filter(User.name.like('%ed')).order_by(User.id)
-        session.query.all()
+        user_filter = session.query(User).filter(User.name.like('%e23d')).order_by(User.id)
+        user_filter.all()
         # Query.first() applies a limit of one and returns the first result as a scalar:
-        session.query.first()
-        # Query.one_or_none()
-        session.query.one_or_none()
+        user_filter.first()
         # Using Textual SQL
         from sqlalchemy import text
         for user in session.query(User).\
@@ -108,17 +107,33 @@ class Test(BrowserView):
         session.query(User).filter(text("id<:value and name=:name")).\
                 params(value=224, name='fred').order_by(User.id).one()
         
-            
+        # Count 
+        count = session.query(sa.func.count(User.id)).all()
+        print(count)
+        # distinct
+        distinct = session.query(sa.func.distinct(User.name)).all()
+        print(distinct)
+        
+    def many_to_one(self, session):
+        first_store = Store(store_id=791215, store_name='Pallas', store_area='Taiwan')
+        session.add(first_store)
+        session.commit()
+        user = session.query(User).first()
+        store = session.query(Store).first()
+        user.stores = [store]
+        session.commit()
+        
     def __call__(self):
         request = self.request
         portal = api.portal.get()
         db, session = self.get_db_and_session()
         
         # *Demo function
-        # self.insert_data(session)
-        self.base_use(db)
+        self.insert_data(session)
+        # self.base_use(db)
         # self.session_search(session)
         # self.aliased_search(session)
         # self.query_filter(session)
+        # self.many_to_one(session)
         
         return "Testing done"
