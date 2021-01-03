@@ -5,7 +5,7 @@ from plone import api
 
 from plone.ORM.browser.engine import Engine
 from plone.ORM.models.user import User, Address
-from plone.ORM.models.store import Store
+from plone.ORM.models.store import Store, Tag
 from sqlalchemy.orm import aliased
 import sqlalchemy as sa
 
@@ -24,7 +24,41 @@ class Test(BrowserView):
         User(name='fred', fullname='Fred Flintstone', nickname='freddy')]
         )
         session.commit()
+        
+        session.rollback()
     
+    def update_data(self, session):
+        # multiple
+        session.query(User).filter(User.name=='ed').update({
+            'fullname': 'ed Andy',
+            })
+        session.commit()
+        
+        # single
+        ed_user = session.query(User).filter(User.name=='ed').first()
+        ed_user.fullname='Ed test'
+        session.commit()
+        
+        session.rollback()
+    
+    def delete_data(self, session):
+        # multiple
+        try:
+            session.query(User).filter(User.name=='ed').delete()
+            session.commit()
+        except:
+            session.rollback()
+        
+        # single
+        try:
+            wendy_user = session.query(User).filter(User.name=='wendy').first()
+            session.delete(wendy_user)
+            session.commit()
+        except:
+            session.rollback()
+            
+        session.rollback()
+        
     def base_use(self, db):
         with db.connect() as conn:
             sqlString = "select name from users"
@@ -41,11 +75,15 @@ class Test(BrowserView):
 
         for row in session.query(User.name.label('name_label')).all():
             print(row.name_label)
+        
+        session.rollback()
     
     def aliased_search(self, session):
         user_alias = aliased(User, name='user_alias')
         for row in session.query(user_alias, user_alias.name).all():
             print(row.user_alias)
+        
+        session.rollback()
     
     def query_filter(self, session):
         for name, in session.query(User.name).\
@@ -69,12 +107,12 @@ class Test(BrowserView):
         # ColumnOperators.is_():
         session.query(User).filter(User.name == None)
         #! alternatively, if pep8/linters are a concern
-        session.query(User).filter(User.name.is_(None))
+        # session.query(User).filter(User.name.is_(None))
         
         # ColumnOperators.isnot():
         session.query(User).filter(User.name != None)
         #! alternatively, if pep8/linters are a concern
-        session.query(User).filter(User.name.isnot(None))
+        # session.query(User).filter(User.name.isnot(None))
         
         # AND:
         # use and_()
@@ -88,6 +126,9 @@ class Test(BrowserView):
         #OR:
         from sqlalchemy import or_
         session.query(User).filter(or_(User.name == 'ed', User.name == 'wendy'))
+        
+        # limit
+        session.query(User).filter(User.name != 'ed').limit(1)
         
         #ColumnOperators.match():
         session.query(User).filter(User.name.match('wendy'))
@@ -114,6 +155,8 @@ class Test(BrowserView):
         distinct = session.query(sa.func.distinct(User.name)).all()
         print(distinct)
         
+        session.rollback()
+        
     def many_to_one(self, session):
         first_store = Store(store_id=791215, store_name='Pallas', store_area='Taiwan')
         session.add(first_store)
@@ -123,17 +166,78 @@ class Test(BrowserView):
         user.stores = [store]
         session.commit()
         
+        session.rollback()
+    
+    def many_to_many(self, session):
+        # tag1 = Tag(tag_type="Apple")
+        # tag2 = Tag(tag_type="Orange")
+        # tag3 = Tag(tag_type="Berry")
+        
+        # session.add_all([
+        # tag1,
+        # tag2,
+        # tag3,
+        # ])
+        # session.commit()
+        
+        # users = session.query(User).all()
+        # users[0].tag_rel = [tag1, tag2]
+        # users[1].tag_rel = [tag1]
+        # users[2].tag_rel = [tag1, tag3]
+        # session.commit()
+        
+        # session.rollback()
+        
+        # print It
+        users = session.query(User).all()
+        result = []
+        for user in users:
+            result.append(user.tag_rel)
+        print(result)
+    
+    def one_to_many(self, session):
+        store = Store(store_id=101, store_name="店1", store_area="北")
+        address = Address(address="Address")
+        
+        session.add_all([
+        store,
+        address,
+        ])
+        session.commit()
+        user = session.query(User).first()
+        address.users = user
+        store.users = user
+        session.commit()
+        
+        session.rollback()
+
+    def one_to_one(self, session):
+        store = session.query(Store).filter(Store.store_id==101).one_or_none()
+        address = session.query(Address).first()
+        address.stores = store
+        session.commit()
+
+        session.rollback()
+    
     def __call__(self):
         request = self.request
         portal = api.portal.get()
         db, session = self.get_db_and_session()
         
+        # https://docs.sqlalchemy.org/en/13/core/dml.html
         # *Demo function
         self.insert_data(session)
+        # self.update_data(session)
+        # self.delete_data(session)
         # self.base_use(db)
         # self.session_search(session)
         # self.aliased_search(session)
         # self.query_filter(session)
         # self.many_to_one(session)
+        # self.many_to_many(session)
+        # self.one_to_many(session)
+        # self.one_to_one(session)
         
-        return "Testing done"
+        
+        session.close()
+        return "Test done"

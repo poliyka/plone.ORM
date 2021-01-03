@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 from plone.ORM.models import Base
 import enum
 
@@ -8,17 +8,25 @@ class MyEnum(enum.Enum):
     one = 1
     two = 2
     three = 3
-    
+
+user_tag_rel = sa.Table(
+    'user_tag_rel',
+    Base.metadata,
+    sa.Column('tag_rt', sa.Integer, sa.ForeignKey('tags.id')),
+    sa.Column('user_rt', sa.Integer, sa.ForeignKey('users.id'))
+    )
 
 class User(Base):
     __tablename__ = 'users'
     
     id = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.String)
-    fullname = sa.Column(sa.String)
-    nickname = sa.Column(sa.String)
-    addresses = relationship('Address', uselist=True)
-    stores = relationship('Store', uselist=True)
+    name = sa.Column(sa.String(128))
+    fullname = sa.Column(sa.String(128))
+    nickname = sa.Column(sa.String(128))
+    addresses = relationship('Address', uselist=True, backref='users', lazy=True)
+    stores = relationship('Store', uselist=True, backref='users', lazy=True)
+    tag_rel = relationship(
+        "Tag", secondary=user_tag_rel, backref="users", lazy=True)
     
     # https://docs.sqlalchemy.org/en/13/core/type_basics.html
     # BigInteger = sa.Column(sa.BigInteger)
@@ -46,8 +54,9 @@ class User(Base):
 class Address(Base):
     __tablename__ = 'user_address'
     id = sa.Column(sa.Integer, primary_key=True)
-    address = sa.Column(sa.String, nullable=False)
+    address = sa.Column(sa.String(128), nullable=False)
     user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id', ondelete="SET NULL"))
+    store_id = sa.Column(sa.Integer, sa.ForeignKey('stores.id', ondelete="SET NULL"))
 
     def __init__(self, address):
         self.address = address
