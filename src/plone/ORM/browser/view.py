@@ -169,24 +169,24 @@ class Test(BrowserView):
         session.rollback()
     
     def many_to_many(self, session):
-        # tag1 = Tag(tag_type="Apple")
-        # tag2 = Tag(tag_type="Orange")
-        # tag3 = Tag(tag_type="Berry")
+        tag1 = Tag(tag_type="Apple")
+        tag2 = Tag(tag_type="Orange")
+        tag3 = Tag(tag_type="Berry")
         
-        # session.add_all([
-        # tag1,
-        # tag2,
-        # tag3,
-        # ])
-        # session.commit()
+        session.add_all([
+        tag1,
+        tag2,
+        tag3,
+        ])
+        session.commit()
         
-        # users = session.query(User).all()
-        # users[0].tag_rel = [tag1, tag2]
-        # users[1].tag_rel = [tag1]
-        # users[2].tag_rel = [tag1, tag3]
-        # session.commit()
+        users = session.query(User).all()
+        users[0].tag_rel = [tag1, tag2]
+        users[1].tag_rel = [tag1]
+        users[2].tag_rel = [tag1, tag3]
+        session.commit()
         
-        # session.rollback()
+        session.rollback()
         
         # print It
         users = session.query(User).all()

@@ -21,11 +21,8 @@ import sys
 # 或許有更好的辦法,暫解
 # 如果i18n版本有更換,需更換路徑
 package_path = os.path.abspath('../../')
-i18n_path = os.path.abspath('../../../../../../buildout-cache/eggs/zope.i18nmessageid-5.0.1-py3.8-linux-x86_64.egg')
 if package_path not in sys.path:
     sys.path.append(package_path)
-if i18n_path not in sys.path:
-    sys.path.append(i18n_path)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
